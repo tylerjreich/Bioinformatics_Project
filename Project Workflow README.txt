@@ -31,6 +31,8 @@ java -jar C:\bioinformatics_tools\gatk\gatk-package-4.6.2.0-local.jar
 You should see the version of GATK printed to confirm it’s loaded correctly.
 
 3. Running the Workflow (Testing with Sample Data)
+from https://console.cloud.google.com/storage/browser/_details/genomics-public-data/test-data/dna/wgs/hiseq2500/NA12878/H06HDADXX130110.1.ATCACGAT.200k_reads.bam?pageState=(%22StorageObjectListTable%22:(%22f%22:%22%255B%255D%22)))
+
 All following commands should be run in the terminal or on the cluster, depending on where GATK is loaded.
 
 3a. Sorting BAM files
