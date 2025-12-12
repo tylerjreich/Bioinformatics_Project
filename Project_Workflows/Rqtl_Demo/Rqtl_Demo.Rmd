@@ -1,0 +1,257 @@
+---
+title: "R/qtl Demo"
+author: "Tyler J Reich"
+date: "2025-12-12"
+output:
+  pdf_document:
+    keep_tex: yes
+  html_document:
+    df_print: paged
+---
+# Preface on this Project:
+
+With almost no background in computer science, learning to write code has been a significant challenge; however, it is one I am eager to undertake. I am grateful that we are allowed to use generative AI in this class, as ChatGPT has been an invaluable resource in helping me develop and understand the R/qtl workflow for QTL mapping. While ChatGPT assisted me in generating the R code to import, process, and analyze genotype and phenotype data, I also asked it to explain what each line of code does and why it is used in the context of QTL analysis. I am prepared to explain this workflow to the best of my ability in order to demonstrate my understanding of how and why it works.
+
+# Preparing Variant Data for R/qtl Analysis
+
+This section describes how to convert genomic Variant Call Format (gVCF/VCF) files from the GATK pipeline into a format compatible with R/qtl for QTL mapping.
+
+## Requirements:
+1. R (>=4.2 recommended)
+2. R/qtl package
+3. bcftools
+4. vcftools (optional, for filtering or subsetting VCFs)
+5.CSV conversion script (provided in scripts/)
+
+---
+
+## 1. Obtain VCF Files from the GATK Pipeline
+
+After low-coverage whole-genome sequencing (lcWGS), single-sample gVCFs are generated with **GATK HaplotypeCaller** in reference-confidence mode. These are then combined and genotyped into a multi-individual VCF using:
+
+- `GenomicsDBImport`
+- `GenotypeGVCFs`
+
+
+This final VCF (or one subset for testing) serves as the input for conversion to R/qtl format.
+
+---
+
+
+## 2. Convert VCF to CSV for R/qtl and Add Phenotype Data
+
+R/qtl expects a single CSV file in which:
+
+- **Each row = one individual**  
+- **Columns = individual ID, phenotype values, followed by marker genotypes**
+
+Because VCFs are marker-major (one row per variant), they must be transposed into individual-major format.
+
+### Extract genotypes using bcftools
+
+Use `bcftools query` to extract marker positions and genotypes:
+
+
+# Extract marker positions and per-individual genotypes from a VCF file
+
+```
+(bash) bcftools query -f '%CHROM\t%POS[\t%GT]\n' input.vcf.gz > genotypes_raw.tsv
+
+Notes:
+bcftools query -> Calls the query command in bcftools, which extracts specific fields from a VCF using a user-defined format string.
+-f '%CHROM\t%POS[\t%GT]\n' -> The format string that tells bcftools exactly what information to print:
+%CHROM → chromosome of each variant
+%POS → genomic position of the variant
+[\t%GT] → for each sample in the VCF, print a tab (\t) followed by the genotype (%GT)
+The square brackets indicate “repeat this for each sample.”
+\t → literal tab separators
+\n → end the line after each variant
+``` 
+
+Each output row will look like:
+chrom  pos  sample1_GT  sample2_GT  sample3_GT  ...
+
+input.vcf.gz -> The compressed VCF file produced by GATK after joint genotyping.
+genotypes_raw.tsv -> Redirects the output into a tab-separated text file named genotypes_raw.tsv.
+
+This produces:
+1. One row per marker
+2.  One column per individual
+3. Genotypes reported in VCF format (e.g., 0/0, 0/1, 1/1)
+
+Convert to R/qtl format:
+A provided script (in scripts/) converts this marker-major file into R/qtl’s individual-major CSV format.
+This script:
+1. Transposes the genotype matrix
+2. Converts VCF genotypes (0/1) to R/qtl genotypes (e.g., AB)
+3. Adds marker names and chromosome positions
+4. Ensures consistent delimiters and header formatting
+
+Add phenotypes:
+Before loading into R/qtl, phenotype measurements must be included as columns immediately after the id column.
+
+Once combined, this CSV can be imported directly into R/qtl using:
+
+```
+cross <- read.cross(format = "csv", file = "filename.csv")
+```
+
+# Preface for the R/qtl Analysis Section
+
+Before applying the QTL mapping pipeline to my Poecilia F2 dataset, I validated all downstream analytical steps using a built-in example dataset provided by R/qtl. The `listeria` dataset is an experimentally derived F2 intercross with known genotypes and phenotypes (Broman et al., 2003), making it an ideal proof-of-concept system. The following analysis demonstrates that the entire R/qtl workflow from data import and quality control to genome scans, permutation testing, confidence interval estimation, and effect-size visualization—runs successfully on a complete and well-formatted F2 dataset. Once my Poecilia genotypes (VCFs -> CSV) and phenotypes are generated, only the input files will need to be replaced, and the same workflow can be directly applied.
+
+# Using Built-In Example Dataset from R/qtl
+
+This section begins by loading the listeria dataset, a built-in F2 intercross included with the R/qtl package. Importing the dataset into the object cross allows all downstream QTL-mapping functions, such as quality control, genome scanning, permutation testing, and effect-size visualization, to be demonstrated on a fully-formatted and validated example dataset.
+
+```{r}
+library(qtl)
+
+# Load the listeria F2 intercross dataset
+data(listeria)
+cross <- listeria
+```
+
+# Inspect the Cross
+
+This step inspects the structure of the imported cross object to confirm that the dataset contains the expected phenotypes, chromosomes, and genetic markers. The `summary(cross)` command provides an overview of the cross type, number of individuals, phenotypic traits, markers, and missing data, while `names(cross$pheno)` and `names(cross$geno)` list the available phenotype columns and chromosomes, respectively. This ensures the dataset is correctly loaded and ready for QTL analysis.
+
+```{r}
+summary(cross)
+# Check phenotypes and genotypes
+names(cross$pheno)   # phenotypes: "T264", "sex"
+names(cross$geno)    # chromosomes: 1, 2, ..., 19, X
+```
+
+# Quality Control Checks
+
+These quality-control checks evaluate data completeness and marker reliability before performing QTL mapping. The `plotMissing(cross)` function visualizes missing genotype data across individuals and markers, helping identify potential issues such as poorly performing markers or samples with excessive missingness. The `geno.table(cross)` command summarizes genotype frequencies for each marker, allowing assessment of segregation distortion or unexpected genotype ratios. Together, these checks ensure the dataset meets quality standards for accurate downstream QTL analysis.
+
+```{r}
+# Plot missing data
+plotMissing(cross)
+
+# Check segregation ratios
+geno.table(cross)
+```
+
+# Calculate Genotype Probabilites
+
+Before performing interval mapping or generating effect plots, R/qtl requires genotype probabilities at positions between observed markers. The `calc.genoprob()` function computes these probabilities along each chromosome, accounting for recombination rates and a small genotyping error probability (`error.prob=0.01`). Setting `step=1` calculates genotype probabilities at 1cM intervals, producing a smoother and more accurate representation of the underlying genetic information needed for QTL detection.
+
+```{r}
+# Needed for effect plots and interval mapping
+cross <- calc.genoprob(cross, step=1, error.prob=0.01)
+```
+
+# Perform Genome Scan
+
+To identify genomic regions associated with the phenotype, a genome-wide QTL scan is performed using `scanone()`. Here, the analysis uses Haley–Knott regression (`method="hk"`) (Haley & Knott, 1992), a fast and robust approximation for interval mapping. The function tests each genomic position for association with the phenotype `"T264"` and returns a LOD (Logarithm of the Odds) score profile across all chromosomes. The resulting plot visualizes these LOD scores, allowing identification of peaks that may represent putative QTL.
+
+```{r}
+# Haley-Knott regression genome scan
+scan1 <- scanone(cross, pheno.col="T264", method="hk")  
+
+# Enhanced plot with title and axis labels
+plot(scan1, 
+     main = "Genome-Wide QTL Scan for Trait T264",
+     xlab = "Chromosome", 
+     ylab = "LOD Score",
+     col = "black", 
+     lwd = 2)
+```
+
+# Permutation Test for Signifcance
+
+To determine whether the observed LOD scores exceed those expected by chance, a permutation test is performed. The function `scanone()` is run 1,000 times with shuffled phenotype labels (`n.perm=1000`), generating an empirical null distribution of LOD scores. This approach provides a robust, data-driven significance threshold that accounts for genome-wide multiple testing. The `summary()` function then compares the observed scan results to the permutation-derived thresholds at the \(\alpha\) = 0.05 level, identifying which peaks represent statistically significant QTL.
+
+```{r}
+perm <- scanone(cross, pheno.col="T264", method="hk", n.perm=1000)
+summary(scan1, perms=perm, alpha=0.05)
+```
+
+# Plotting Significant QTLs
+
+This code visualizes the genome scan results and highlights statistically significant QTLs. First, the 5% genome-wide significance threshold is extracted from the permutation test using `summary(perm, alpha=0.05)`. The LOD score profile from the genome scan is plotted with `plot(scan1)`, and a horizontal dashed red line (`abline()`) is added at the threshold value. Peaks that rise above this line represent loci that are significant at the genome-wide level.
+
+```{r}
+# Get the 5% genome-wide significance threshold
+lod_thresh <- summary(perm, alpha=0.05)
+
+# Plot LOD profile with improved labels
+plot(scan1, 
+     main = "Genome-Wide LOD Profile with 5% Significance Threshold",
+     xlab = "Chromosome", 
+     ylab = "LOD Score",
+     col = "black", 
+     lwd = 2)
+
+# Add horizontal line for genome-wide significance
+abline(h = lod_thresh, col = "red", lty = 2)
+```
+
+# Identify QTL Confidence Interval
+
+This code identifies the approximate confidence intervals for detected QTLs on specific chromosomes. The `lodint()` function calculates the region around the peak LOD score where the LOD drops by a specified value (`drop=1.5` corresponds roughly to a 95% confidence interval). In this example, confidence intervals are computed for chromosomes 5 and 13. The resulting intervals indicate the genomic regions most likely to contain the causal loci underlying the trait of interest.
+
+```{r}
+# LOD interval (95% confidence) for a chromosome
+ci5 <- lodint(scan1, chr="5", drop=1.5)
+ci5
+
+ci13 <- lodint(scan1, chr="13", drop=1.5)
+ci13
+```
+# Plot Confidence Intervals
+
+This section visualizes the LOD profiles for chromosomes 5 and 13 from the genome-wide QTL scan. Horizontal red dashed lines represent the 5% genome-wide significance threshold, indicating which peaks are statistically significant. Blue vertical dashed lines denote the 95% confidence intervals around detected QTLs, providing a range where the true QTL is likely located. Red points mark the peak markers within these intervals (`c5.loc28` for chromosome 5 and `D13M147` for chromosome 13), highlighting the loci with the strongest association to the trait of interest. This visualization helps to quickly identify significant QTLs and their approximate genomic locations.
+
+```{r}
+# LOD profile plot for chromosome 5
+plot(scan1, chr=5, main="LOD Profile for Chromosome 5", ylab="LOD score")
+
+# Add horizontal significance threshold
+abline(h=lod_thresh, col="red", lty=2)
+
+# Add vertical lines for CI
+abline(v=15, col="blue", lty=2) # start of CI
+abline(v=38, col="blue", lty=2) # end of CI
+
+# Peak marker
+points(x=28, y=6.68, col="red", pch=19) # c5.loc28
+
+# LOD profile plot for chromosome 13
+plot(scan1, chr=13, main="LOD Profile for Chromosome 13", ylab="LOD score")
+
+# Add horizontal significance threshold
+abline(h=lod_thresh, col="red", lty=2)
+
+# Add vertical lines for CI
+abline(v=17, col="blue", lty=2) # start of CI
+abline(v=30, col="blue", lty=2) # end of CI
+
+# Peak marker
+points(x=26.16, y=5.92, col="red", pch=19) # D13M147
+```
+
+# Plot Marker Effects
+
+This code visualizes the effect of a specific marker on the phenotype. The `effectplot()` function shows how different genotypes at the chosen marker (here, `D13M147`) influence the trait values. This allows you to assess the magnitude and direction of the genetic effect at that locus. Note that if genotype probabilities were not previously calculated with `calc.genoprob()`, the function will automatically perform that step before plotting.
+
+```{r}
+# Plot effect at marker D13M147 with enhanced visualization
+effectplot(cross, mname1 = "D13M147",
+           main = "Genotypic Effect at Marker D13M147",
+           xlab = "Genotype",
+           ylab = "Trait Value (T264)")
+```
+
+# Conclusion
+
+This workflow demonstrates a complete pipeline for QTL mapping using R/qtl, from importing genotype and phenotype data to performing genome scans, permutation testing, identifying significant QTLs, and estimating confidence intervals and effect sizes. Using the `listeria` F2 intercross dataset as a proof-of-concept, all steps including data quality checks, genotype probability calculation, and effect plotting were successfully executed, confirming that the pipeline functions as intended. Once genotype and phenotype data from the F2 Poecilia population are available, this workflow can be directly applied, enabling identification of loci associated with dorsal fin traits and facilitating downstream analyses to investigate the genetic architecture of sexually selected traits. The modular structure of this pipeline ensures reproducibility and allows easy adaptation to new datasets, making it a reliable tool for quantitative genetics studies.
+
+# References
+
+Broman, K. W., Wu, H., Sen, Ś., & Churchill, G. A. (2003). R/qtl: QTL mapping in experimental crosses. Bioinformatics, 19(7), 889–890. https://doi.org/10.1093/bioinformatics/btg112
+
+Haley, C. S., & Knott, S. A. (1992). A simple regression method for mapping quantitative trait loci in line crosses using flanking markers. Heredity, 69(4), 315–324. https://doi.org/10.1038/hdy.1992.131
