@@ -1,0 +1,3 @@
+@HD	VN:1.6	SO:coordinate
+@RG	ID:B	SM:NA12878	LB:Solexa-NA12878	PL:illumina	PU:H06HDADXX130110.1.ATCACGAT
+@PG	ID:samtools	PN:samtools	VN:1.10	CL:samtools view -H /mnt/c/Bioinformatics_Project/Data/test_sorted.bam
