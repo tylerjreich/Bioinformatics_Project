@@ -18,8 +18,10 @@ Notes: Ensure the installed version supports BAM indexing (.bai) and SAM/BAM con
 Optional Tools
 BCFtools: Often used alongside Samtools for variant calling and filtering. http://www.htslib.org/
 
+---
 Installing directly from Linux/WSL2:
 
+```
 # Update package lists
 sudo apt update
 sudo apt upgrade -y
@@ -48,3 +50,4 @@ gatk --version
 
 # Picard can be downloaded separately or is included in GATK
 wget https://github.com/broadinstitute/picard/releases/download/2.27.4/picard.jar
+```
