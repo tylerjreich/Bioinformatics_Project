@@ -24,6 +24,8 @@ Download: Microsoft Store
   Username: any name (e.g., tyler)
   Password: secure password
 
+The following packages can be installed directly from Linux/WSL2 using Ubuntu (below), but if desired to install separately, follow inscructions 3-5.
+
 3. GATK (Genome Analysis Toolkit)
 Purpose: GATK is used for variant discovery and genotyping. In this workflow, it is used for HaplotypeCaller, GenotypeGVCFs, and other variant processing steps.
 Download: https://gatk.broadinstitute.org
