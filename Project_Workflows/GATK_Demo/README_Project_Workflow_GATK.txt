@@ -62,9 +62,6 @@ Verify installations:
 1b. Download data files
 Ensure all input files (FASTQ, BAM, reference genome) are in the data/ directory. Maintain the same file structure.
 
-1c. Verify file integrity (optional)
-> CertUtil -hashfile <file_name> MD5
-
 2. Setting Up the GATK Environment
 Go to your home directory
 > cd ~
@@ -184,6 +181,7 @@ scans is provided in the R Markdown file: "rQTL_Demo.Rmd".
 
 This R Markdown file contains step-by-step instructions and annotated code for performing QTL mapping using the 
 listeria F2 intercross dataset as a proof-of-concept.
+
 
 
 
