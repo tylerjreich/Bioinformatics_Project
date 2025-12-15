@@ -120,38 +120,17 @@ Homo_sapiens_assembly38.fasta.bwt
 Homo_sapiens_assembly38.fasta.pac
 Homo_sapiens_assembly38.fasta.sa
 
-4. Run GATK HaplotypeCaller
+4. Running GATK HaplotypeCaller
 
 4a. Access Windows Files from WSL2
 Navigate to your working directory:
-> > cd /mnt/c/Bioinformatics_Project/Data
+> cd /mnt/c/Bioinformatics_Project/Data
 
-4b. Minimal Variant Calling Workflow (Samtools + BCFtools)
-> samtools mpileup -f reference.fa sample.bam | bcftools call -mv -Ov -o variants.vcf
-Description:
-	reference.fa → reference genome
-	sample.bam → aligned reads
-	variants.vcf → output variants file
-	-mv → call SNPs and indels
-	-Ov → output as VCF
-
-4c. Prepare BAM for GATK
-Step 1: Check BAM header for contigs
-> samtools view -H test_dedup.bam | grep "@SQ"
-Step 2: Extract reference contigs
-> samtools faidx Homo_sapiens_assembly38.fasta
-> cut -f1,2 Homo_sapiens_assembly38.fasta.fai > ref_contigs.txt
-Step 3: Fix BAM header
-> samtools reheader <(cat ref_contigs.txt) test_dedup.bam > test_dedup_fixed.bam
-Step 4: Add read group information
-> samtools addreplacerg \
-  -r "@RG\tID:NA12878\tSM:NA12878\tLB:lib1\tPL:illumina\tPU:unit1" \
-  -o test_dedup_rg.bam \
-  test_dedup_fixed.bam
-Step 5: Index BAM
+4b. Prepare BAM for GATK Haplotype Caller
+Index BAM
 > samtools index test_dedup_rg.bam
 
-4d. Run GATK HaplotypeCaller (GVCF)
+4c. Run GATK HaplotypeCaller (GVCF)
 > gatk --java-options "-Xmx4g" HaplotypeCaller \
   -R Homo_sapiens_assembly38.fasta \
   -I test_dedup_rg.bam \
@@ -159,12 +138,12 @@ Step 5: Index BAM
   -ERC GVCF \
   --sample-name NA12878
 Notes:
--ERC GVCF → emits reference confidence blocks
---sample-name → required if BAM contains multiple samples or missing @RG
+-ERC GVCF -> emits reference confidence blocks
+--sample-name -> required if BAM contains multiple samples or missing @RG
 Check output
 > zcat test_raw_variants.g.vcf.gz | head -20
 
-4e. Genotype GVCF (VCF)
+4d. Genotype GVCF (VCF)
 > gatk --java-options "-Xmx16g" GenotypeGVCFs \
   -R Homo_sapiens_assembly38.fasta \
   -V test_raw_variants.g.vcf.gz \
@@ -205,6 +184,7 @@ scans is provided in the R Markdown file: "rQTL_Demo.Rmd".
 
 This R Markdown file contains step-by-step instructions and annotated code for performing QTL mapping using the 
 listeria F2 intercross dataset as a proof-of-concept.
+
 
 
 
