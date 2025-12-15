@@ -45,16 +45,18 @@ Step 0d: Update Ubuntu Packages
 > sudo apt upgrade -y
 
 Step 0e: Install Required Tools
-> sudo apt install samtools bcftools bwa -y
+> sudo apt update
+> sudo apt install openjdk-11-jdk samtools bcftools bwa -y
 
 Verify installations:
+> java --version
 > samtools --version
 > bcftools --version
-> bwa
+> bwa 
 
 1. Accessing Project Files
 
-1. Access respository
+1a. Access repository:
 > cd /mnt/c/Bioinformatics_Project
 
 1b. Download data files
@@ -64,14 +66,14 @@ Ensure all input files (FASTQ, BAM, reference genome) are in the data/ directory
 > CertUtil -hashfile <file_name> MD5
 
 2. Setting Up the GATK Environment
-
-2a. Load modules (cluster example)
-> module load java/1.8.0
-> module load gatk/4.3.0.0
-
-2b. Verify GATK installation
-> java -jar C:\bioinformatics_tools\gatk\gatk-package-4.6.2.0-local.jar
-You should see the GATK version printed.
+Go to your home directory
+> cd ~
+Download GATK
+> wget https://github.com/broadinstitute/gatk/releases/download/4.6.0.0/gatk-4.6.0.0.zip
+Unzip GATK
+> unzip gatk-4.6.0.0.zip
+Verify
+> gatk --version
 
 3. Running the Workflow (Sample Data)
 Sample Data:https://console.cloud.google.com/storage/browser/genomics-public-data/test-data/dna/wgs/hiseq2500/NA12878?pageState=(%22StorageObjectListTable%22:(%22f%22:%22%255B%255D%22))
@@ -205,5 +207,6 @@ scans is provided in the R Markdown file: "rQTL_Demo.Rmd".
 
 This R Markdown file contains step-by-step instructions and annotated code for performing QTL mapping using the 
 listeria F2 intercross dataset as a proof-of-concept.
+
 
 
