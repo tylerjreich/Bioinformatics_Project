@@ -80,9 +80,9 @@ Sample Data:https://console.cloud.google.com/storage/browser/genomics-public-dat
 Sample Reference Genome: https://console.cloud.google.com/storage/browser/genomics-public-data/references/Homo_sapiens_assembly19_1000genomes_decoy?pageState=(%22StorageObjectListTable%22:(%22f%22:%22%255B%255D%22))
 
 3a. Sort BAM
-> java -jar C:\bioinformatics_tools\gatk\gatk-package-4.6.2.0-local.jar SortSam \
-    -I C:\Bioinformatics_Project\Data\test-data_dna_wgs_hiseq2500_NA12878_H06HDADXX130110.1.ATCACGAT.200k_reads.bam \
-    -O C:\Bioinformatics_Project\Data\test_sorted.bam \
+> java -jar /mnt/c/bioinformatics_tools/gatk/gatk-package-4.6.2.0-local.jar SortSam \
+    -I /mnt/c/Bioinformatics_Project/Data/test-data_dna_wgs_hiseq2500_NA12878_H06HDADXX130110.1.ATCACGAT.200k_reads.bam \
+    -O /mnt/c/Bioinformatics_Project/Data/test_sorted.bam \
     -SO coordinate
 Output: test_sorted.bam
 Description: Sorts BAM by genomic coordinates
@@ -96,8 +96,8 @@ Outputs: test_dedup.bam, test_metrics.txt
 Description: Marks duplicate reads from PCR
 
 3c. Index BAM
-> java -jar C:\bioinformatics_tools\gatk\gatk-package-4.6.2.0-local.jar BuildBamIndex \
-    -I C:\Bioinformatics_Project\Data\test_dedup.bam
+> java -jar /mnt/c/bioinformatics_tools/gatk/gatk-package-4.6.2.0-local.jar BuildBamIndex \
+    -I /mnt/c/Bioinformatics_Project/Data/test_dedup.bam
 Output: test_dedup.bai
 
 3d. Index Reference Genome for Alignment (BWA)
@@ -123,10 +123,8 @@ Homo_sapiens_assembly38.fasta.sa
 4. Run GATK HaplotypeCaller
 
 4a. Access Windows Files from WSL2
-Windows drives are mounted under /mnt/.
-Example:C:\Users\Tyler Reich\data → /mnt/c/Users/Tyler\ Reich/data
 Navigate to your working directory:
-> cd /mnt/c/Users/Tyler\ Reich/data
+> > cd /mnt/c/Bioinformatics_Project/Data
 
 4b. Minimal Variant Calling Workflow (Samtools + BCFtools)
 > samtools mpileup -f reference.fa sample.bam | bcftools call -mv -Ov -o variants.vcf
@@ -207,6 +205,7 @@ scans is provided in the R Markdown file: "rQTL_Demo.Rmd".
 
 This R Markdown file contains step-by-step instructions and annotated code for performing QTL mapping using the 
 listeria F2 intercross dataset as a proof-of-concept.
+
 
 
 
