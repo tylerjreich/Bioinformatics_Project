@@ -183,8 +183,3 @@ This R Markdown file contains step-by-step instructions and annotated code for p
 listeria F2 intercross dataset as a proof-of-concept.
 
 
-
-
-
-
-
