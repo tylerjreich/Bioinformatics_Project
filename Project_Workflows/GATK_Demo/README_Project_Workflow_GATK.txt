@@ -75,7 +75,7 @@ You should see the GATK version printed.
 
 3. Running the Workflow (Sample Data)
 Sample Data:https://console.cloud.google.com/storage/browser/genomics-public-data/test-data/dna/wgs/hiseq2500/NA12878?pageState=(%22StorageObjectListTable%22:(%22f%22:%22%255B%255D%22))
-Sample Data: https://console.cloud.google.com/storage/browser/genomics-public-data/references/Homo_sapiens_assembly19_1000genomes_decoy?pageState=(%22StorageObjectListTable%22:(%22f%22:%22%255B%255D%22))
+Sample Reference Genome: https://console.cloud.google.com/storage/browser/genomics-public-data/references/Homo_sapiens_assembly19_1000genomes_decoy?pageState=(%22StorageObjectListTable%22:(%22f%22:%22%255B%255D%22))
 
 3a. Sort BAM
 > java -jar C:\bioinformatics_tools\gatk\gatk-package-4.6.2.0-local.jar SortSam \
@@ -205,4 +205,5 @@ scans is provided in the R Markdown file: "rQTL_Demo.Rmd".
 
 This R Markdown file contains step-by-step instructions and annotated code for performing QTL mapping using the 
 listeria F2 intercross dataset as a proof-of-concept.
+
 
