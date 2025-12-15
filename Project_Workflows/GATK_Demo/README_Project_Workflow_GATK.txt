@@ -128,7 +128,7 @@ Index BAM
 > samtools index test_dedup_rg.bam
 
 4c. Run GATK HaplotypeCaller (GVCF)
-> gatk --java-options "-Xmx4g" HaplotypeCaller \
+> gatk --java-options "-Xmx16g" HaplotypeCaller \
   -R Homo_sapiens_assembly38.fasta \
   -I test_dedup_rg.bam \
   -O test_raw_variants.g.vcf.gz \
@@ -181,6 +181,7 @@ scans is provided in the R Markdown file: "rQTL_Demo.Rmd".
 
 This R Markdown file contains step-by-step instructions and annotated code for performing QTL mapping using the 
 listeria F2 intercross dataset as a proof-of-concept.
+
 
 
 
