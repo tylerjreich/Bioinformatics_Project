@@ -54,9 +54,8 @@ Verify installations:
 
 1. Accessing Project Files
 
-1a. Clone repository (optional if using version control)
-> git clone <repository_url>
-> cd <repository_name>
+1. Access respository
+> cd /mnt/c/Bioinformatics_Project
 
 1b. Download data files
 Ensure all input files (FASTQ, BAM, reference genome) are in the data/ directory. Maintain the same file structure.
@@ -206,3 +205,4 @@ scans is provided in the R Markdown file: "rQTL_Demo.Rmd".
 
 This R Markdown file contains step-by-step instructions and annotated code for performing QTL mapping using the 
 listeria F2 intercross dataset as a proof-of-concept.
+
